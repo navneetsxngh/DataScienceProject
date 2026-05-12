@@ -10,7 +10,11 @@ uv venv
 ```
 
 2. Create a `template.py` file
-Inside this we create our whole project structure.
+- Inside this we create our whole project structure.
 
 3. Custom Logging Implementation 
-Inside `src/datascience.__init__.py` we create our logger
+- Inside `src/datascience/__init__.py` we create our logger
+
+4. Commom Utilities Functions
+- Inside `src/datascience/utils/main_utils.py` added function `load_yaml()`, `create_directories()`
+- Inside `research/research.ipynb` we demonstrate the functions 
