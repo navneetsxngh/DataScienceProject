@@ -32,7 +32,10 @@ uv venv
 
 5. Data Ingestion
 Workflows --> ML Pipeline
-- Inside `src/datascience/components/dataingestion.py`
+- Inside `src/datascience/components/dataingestion.py` --> Add DataIngestion
+- Inside `src/datascience/config/configuration.py` --> Add Configuration Manager
+- Inside `src/datascience/entity/config_entity.py` --> Add DataIngestionConfig
+- Inside `src/datascience/pipeline/dataingestionpipeline.py` --> Add DataIngestionTrainingPipeline
 
 UPDATE config.yaml (Important)
 UPDATE schema.yaml
@@ -44,3 +47,14 @@ UPDATE the pipeline
 UPDATE the main.py
 
 `schema.yaml` and `params.yaml` not required in Data Ingestion
+
+6. Data Validation
+- Inside `src/datasciencs/components/datavalidation.py` --> Add DataVaidation
+- Inside `src/datascience/config/configuration.py` --> Update Configuration Manager
+- Inside `src/datascience/entity/config_entity.py` --> Add DataValidation
+- Inside `src/datascience/pipeline/datavalidationpipeline.py` --> Add DataValidationTrainingPipeline
+
+UPDATE schema.yaml (Important)
+
+3. Data Transformation
+Mainly Feature Engineering or Data Preprocessing
