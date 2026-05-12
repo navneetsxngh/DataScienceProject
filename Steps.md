@@ -51,10 +51,23 @@ UPDATE the main.py
 6. Data Validation
 - Inside `src/datasciencs/components/datavalidation.py` --> Add DataVaidation
 - Inside `src/datascience/config/configuration.py` --> Update Configuration Manager
-- Inside `src/datascience/entity/config_entity.py` --> Add DataValidation
+- Inside `src/datascience/entity/config_entity.py` --> Add DataValidationConfig
 - Inside `src/datascience/pipeline/datavalidationpipeline.py` --> Add DataValidationTrainingPipeline
 
 UPDATE schema.yaml (Important)
 
-3. Data Transformation
+7. Data Transformation
 Mainly Feature Engineering or Data Preprocessing
+- Inside `src/datasciencs/components/datatransformation.py` --> Add DataTransformation
+- Inside `src/datascience/config/configuration.py` --> Update Configuration Manager
+- Inside `src/datascience/entity/config_entity.py` --> Add DataTransformationConfig
+- Inside `src/datascience/pipeline/datatransformationpipeline.py` --> Add DataTransformationTrainingPipeline
+
+8. Model Trainer
+Training the Machine Learning Model
+- Inside `src/datasciencs/components/modeltrainer.py` --> Add ModelTrainer
+- Inside `src/datascience/config/configuration.py` --> Update Configuration Manager
+- Inside `src/datascience/entity/config_entity.py` --> Add ModelTrainerConfig
+- Inside `src/datascience/pipeline/modeltrainingpipeline.py` --> Add ModelTrainingPipeline
+
+Update `params.yml` (Important)
