@@ -1,0 +1,26 @@
+from src.datascience import logger
+from src.datascience.config.configuration import ConfigurationManager
+from src.datascience.components.datatransformation import DataTransformation
+from pathlib import Path
+
+STAGE_NAME = "Data Transformation Stage"
+
+class DataTransformationTrainingPipeline:
+    def __init__(self) -> None:
+        pass
+
+    def initiate_data_transformation(self):
+        try:
+            with open(Path("artifacts/data_validation/status.txt"), 'r') as f:
+                status = f.read().split(" ")[-1]
+            
+            if status == "True":
+                config = ConfigurationManager()
+                data_transformation_config = config.get_data_transformation_config()
+                data_transformation = DataTransformation(config= data_transformation_config)
+                data_transformation.train_test_splitting()
+            else:
+                raise Exception("Your data Scheme is not Valid")
+        except Exception as e:
+            logger.error(e)
+            raise e
