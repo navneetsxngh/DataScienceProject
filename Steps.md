@@ -71,3 +71,6 @@ Training the Machine Learning Model
 - Inside `src/datascience/pipeline/modeltrainingpipeline.py` --> Add ModelTrainingPipeline
 
 Update `params.yml` (Important)
+
+9. Model Evaluation
+Using `mlflow` and `dagshub`
