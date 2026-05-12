@@ -9,3 +9,8 @@ uv init
 uv venv
 ```
 
+2. Create a `template.py` file
+Inside this we create our whole project structure.
+
+3. Custom Logging Implementation 
+Inside `src/datascience.__init__.py` we create our logger
