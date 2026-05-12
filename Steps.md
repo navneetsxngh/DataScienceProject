@@ -16,5 +16,5 @@ uv venv
 - Inside `src/datascience/__init__.py` we create our logger
 
 4. Commom Utilities Functions
-- Inside `src/datascience/utils/main_utils.py` added function `load_yaml()`, `create_directories()`
+- Inside `src/datascience/utils/main_utils.py` added function `load_yaml()`, `create_directories()`, `save_json()`, `load_json()`, `save_bin()`, `load_bin()`
 - Inside `research/research.ipynb` we demonstrate the functions 
