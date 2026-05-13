@@ -13,7 +13,7 @@ def home():
 @app.route('/train', methods=['GET'])
 def train():
     os.system("python main.py")
-    return "Training Successful"
+    return render_template("train.html")
 
 @app.route('/predict', methods= ['GET', 'POST'])
 def predict():

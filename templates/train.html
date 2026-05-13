@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Model Training — AI Wine Predictor</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    /* ── CSS Variables ─────────────────────────────────── */
+    :root {
+      --wine-deep:    #0d0108;
+      --wine-primary: #6D071A;
+      --wine-bright:  #8B0000;
+      --gold:         #C9A96E;
+      --gold-light:   #e8c98a;
+      --success:      #27ae60;
+      --success-glow: rgba(39,174,96,0.35);
+      --glass-border: rgba(255,255,255,0.10);
+      --text-primary:   #ffffff;
+      --text-secondary: rgba(255,255,255,0.65);
+      --text-muted:     rgba(255,255,255,0.35);
+      --radius-sm: 12px;
+      --radius-lg: 28px;
+      --shadow-card: 0 28px 90px rgba(0,0,0,0.65), 0 0 60px rgba(39,174,96,0.08);
+      --ease: cubic-bezier(0.4,0,0.2,1);
+    }
+
+    /* ── Reset ─────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    /* ── Body ──────────────────────────────────────────── */
+    body {
+      min-height: 100vh;
+      background: var(--wine-deep);
+      font-family: 'Poppins', system-ui, sans-serif;
+      color: var(--text-primary);
+      overflow-x: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2.5rem 1.5rem;
+    }
+
+    /* ── Background ────────────────────────────────────── */
+    .bg-canvas {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+
+    .bg-gradient {
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 80% 60% at 15% 15%, rgba(109,7,26,0.4) 0%, transparent 55%),
+        radial-gradient(ellipse 60% 70% at 85% 85%, rgba(139,0,0,0.3) 0%, transparent 55%),
+        radial-gradient(ellipse 50% 40% at 50% 100%, rgba(39,174,96,0.08) 0%, transparent 60%),
+        linear-gradient(180deg, #0d0108 0%, #150308 50%, #0d0108 100%);
+    }
+
+    .bg-grid {
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.018) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.018) 1px, transparent 1px);
+      background-size: 64px 64px;
+    }
+
+    .blob {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(70px);
+      animation: blobFloat 9s ease-in-out infinite;
+    }
+
+    .blob-1 {
+      width: 500px; height: 500px;
+      background: radial-gradient(circle, rgba(109,7,26,0.5) 0%, transparent 70%);
+      top: -150px; left: -100px;
+      opacity: 0.4;
+    }
+
+    .blob-2 {
+      width: 400px; height: 400px;
+      background: radial-gradient(circle, rgba(139,0,0,0.4) 0%, transparent 70%);
+      bottom: -100px; right: -80px;
+      opacity: 0.35; animation-delay: -4.5s;
+    }
+
+    .blob-success {
+      width: 350px; height: 350px;
+      background: radial-gradient(circle, rgba(39,174,96,0.15) 0%, transparent 70%);
+      top: 40%; left: 50%;
+      transform: translateX(-50%);
+      opacity: 0.6; animation-delay: -2s;
+    }
+
+    @keyframes blobFloat {
+      0%, 100% { transform: translate(0, 0); }
+      50%       { transform: translate(20px, -28px); }
+    }
+
+    /* ── Train Card ────────────────────────────────────── */
+    .train-card {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 480px;
+      background: rgba(255,255,255,0.038);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-card);
+      overflow: hidden;
+      text-align: center;
+      animation: cardReveal 0.75s var(--ease) both;
+    }
+
+    /* Top accent — uses success green */
+    .train-card::before {
+      content: '';
+      display: block;
+      height: 2px;
+      background: linear-gradient(90deg,
+        transparent 0%,
+        var(--wine-primary) 20%,
+        var(--success) 50%,
+        var(--wine-primary) 80%,
+        transparent 100%
+      );
+    }
+
+    @keyframes cardReveal {
+      from { opacity: 0; transform: translateY(28px) scale(0.97); }
+      to   { opacity: 1; transform: translateY(0)   scale(1); }
+    }
+
+    /* ── Card Inner ────────────────────────────────────── */
+    .card-inner { padding: 3rem 2.5rem 2.5rem; }
+
+    /* ── Success Icon ──────────────────────────────────── */
+    .success-ring {
+      position: relative;
+      width: 90px; height: 90px;
+      margin: 0 auto 1.75rem;
+    }
+
+    /* Outer pulsing ring */
+    .success-ring::before {
+      content: '';
+      position: absolute;
+      inset: -8px;
+      border-radius: 50%;
+      border: 2px solid var(--success);
+      opacity: 0.3;
+      animation: ringPulse 2.4s ease-in-out infinite;
+    }
+
+    @keyframes ringPulse {
+      0%, 100% { transform: scale(1);    opacity: 0.3; }
+      50%       { transform: scale(1.12); opacity: 0.08; }
+    }
+
+    .success-circle {
+      width: 90px; height: 90px;
+      border-radius: 50%;
+      background: rgba(39,174,96,0.12);
+      border: 1.5px solid rgba(39,174,96,0.35);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.4rem;
+      box-shadow: 0 0 32px var(--success-glow), 0 0 8px rgba(39,174,96,0.2) inset;
+      animation: successPop 0.6s 0.2s var(--ease) both;
+    }
+
+    @keyframes successPop {
+      0%   { transform: scale(0.6); opacity: 0; }
+      70%  { transform: scale(1.08); }
+      100% { transform: scale(1);   opacity: 1; }
+    }
+
+    /* ── Status Badge ──────────────────────────────────── */
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      background: rgba(39,174,96,0.1);
+      border: 1px solid rgba(39,174,96,0.28);
+      color: var(--success);
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      padding: 0.38rem 1rem;
+      border-radius: 999px;
+      margin-bottom: 1.25rem;
+      animation: fadeInUp 0.5s 0.4s both;
+    }
+
+    .status-dot-green {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--success);
+      box-shadow: 0 0 8px rgba(39,174,96,0.9);
+    }
+
+    /* ── Heading ───────────────────────────────────────── */
+    .card-title {
+      font-size: 1.7rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      background: linear-gradient(140deg, #fff 0%, rgba(255,255,255,0.78) 50%, var(--gold-light) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 0.6rem;
+      animation: fadeInUp 0.5s 0.5s both;
+    }
+
+    .card-subtitle {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      line-height: 1.65;
+      margin-bottom: 2rem;
+      font-weight: 300;
+      animation: fadeInUp 0.5s 0.6s both;
+    }
+
+    /* ── Metrics Grid ──────────────────────────────────── */
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+      margin-bottom: 2rem;
+      animation: fadeInUp 0.5s 0.75s both;
+    }
+
+    .metric-card {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: var(--radius-sm);
+      padding: 1rem 0.75rem;
+      text-align: center;
+      transition: all 0.25s var(--ease);
+    }
+
+    .metric-card:hover {
+      background: rgba(255,255,255,0.07);
+      border-color: rgba(255,255,255,0.14);
+    }
+
+    .metric-icon {
+      font-size: 1.4rem;
+      margin-bottom: 0.35rem;
+    }
+
+    .metric-label {
+      font-size: 0.62rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 0.2rem;
+    }
+
+    .metric-value {
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+
+    /* ── Divider ───────────────────────────────────────── */
+    .divider {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
+      margin-bottom: 2rem;
+      animation: fadeIn 0.5s 0.9s both;
+    }
+
+    /* ── Action Buttons ────────────────────────────────── */
+    .btn-group {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+      animation: fadeInUp 0.5s 1s both;
+    }
+
+    .btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.4rem;
+      padding: 0.9rem 1rem;
+      border-radius: var(--radius-sm);
+      font-size: 0.88rem;
+      font-weight: 600;
+      font-family: 'Poppins', inherit;
+      cursor: pointer;
+      text-decoration: none;
+      border: none;
+      transition: all 0.3s var(--ease);
+      letter-spacing: 0.02em;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(120deg, transparent 30%, rgba(255,255,255,0.1) 50%, transparent 70%);
+      transform: translateX(-100%);
+      transition: transform 0.45s ease;
+    }
+
+    .btn:hover::before { transform: translateX(100%); }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--wine-primary) 0%, #9b1428 100%);
+      color: #fff;
+      box-shadow: 0 4px 20px rgba(109,7,26,0.45);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 12px 32px rgba(109,7,26,0.62);
+    }
+
+    .btn-secondary {
+      background: rgba(255,255,255,0.05);
+      color: rgba(255,255,255,0.75);
+      border: 1px solid rgba(255,255,255,0.12);
+      backdrop-filter: blur(10px);
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255,255,255,0.1);
+      border-color: rgba(255,255,255,0.22);
+      transform: translateY(-3px);
+      color: #fff;
+    }
+
+    .btn:active { transform: translateY(-1px) !important; }
+
+    /* ── Footer Note ───────────────────────────────────── */
+    .footer-note {
+      font-size: 0.68rem;
+      color: var(--text-muted);
+      margin-top: 1.5rem;
+      animation: fadeIn 0.5s 1.2s both;
+    }
+
+    /* ── Animations ────────────────────────────────────── */
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to   { opacity: 1; }
+    }
+
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(14px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── Responsive ────────────────────────────────────── */
+    @media (max-width: 460px) {
+      .card-inner { padding: 2.25rem 1.5rem 2rem; }
+      .btn-group  { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ── Background ── -->
+  <div class="bg-canvas">
+    <div class="bg-gradient"></div>
+    <div class="bg-grid"></div>
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+    <div class="blob blob-success"></div>
+  </div>
+
+  <!-- ── Training Complete Card ── -->
+  <div class="train-card">
+    <div class="card-inner">
+
+      <!-- Success Icon -->
+      <div class="success-ring">
+        <div class="success-circle">✅</div>
+      </div>
+
+      <!-- Status Badge -->
+      <div class="status-badge">
+        <div class="status-dot-green"></div>
+        Training Complete
+      </div>
+
+      <!-- Heading -->
+      <h1 class="card-title">Model Retrained</h1>
+      <p class="card-subtitle">
+        The ElasticNet regression model has been successfully retrained on the latest wine quality dataset.
+        The new model is live and ready to make predictions.
+      </p>
+
+      <!-- Metrics Grid -->
+      <div class="metrics-grid">
+        <div class="metric-card">
+          <div class="metric-icon">🍷</div>
+          <div class="metric-label">Dataset</div>
+          <div class="metric-value">Red Wine</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-icon">🤖</div>
+          <div class="metric-label">Algorithm</div>
+          <div class="metric-value">ElasticNet</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-icon">⚙️</div>
+          <div class="metric-label">Pipeline</div>
+          <div class="metric-value">MLflow</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-icon">🔬</div>
+          <div class="metric-label">Features</div>
+          <div class="metric-value">11 Parameters</div>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- Action Buttons -->
+      <div class="btn-group">
+        <a href="/predict" class="btn btn-primary">🔮 Make Prediction</a>
+        <a href="/"        class="btn btn-secondary">🏠 Go Home</a>
+      </div>
+
+      <p class="footer-note">Model artifacts saved · MLflow tracking enabled</p>
+
+    </div>
+  </div>
+
+</body>
+</html>

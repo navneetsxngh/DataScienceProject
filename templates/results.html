@@ -3,278 +3,660 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Wine Quality Result</title>
+  <title>Wine Quality Result — AI Predictor</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
   <style>
+    /* ── CSS Variables ─────────────────────────────────── */
+    :root {
+      --wine-deep:    #0d0108;
+      --wine-primary: #6D071A;
+      --wine-bright:  #8B0000;
+      --gold:         #C9A96E;
+      --gold-light:   #e8c98a;
+      --glass-bg:     rgba(255,255,255,0.04);
+      --glass-border: rgba(255,255,255,0.10);
+      --text-primary:   #ffffff;
+      --text-secondary: rgba(255,255,255,0.65);
+      --text-muted:     rgba(255,255,255,0.35);
+      --radius-sm: 12px;
+      --radius-lg: 28px;
+      --shadow-card: 0 28px 90px rgba(0,0,0,0.65), 0 0 70px rgba(109,7,26,0.18);
+      --ease: cubic-bezier(0.4,0,0.2,1);
+    }
+
+    /* ── Reset ─────────────────────────────────────────── */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+    /* ── Body ──────────────────────────────────────────── */
     body {
       min-height: 100vh;
+      background: var(--wine-deep);
+      font-family: 'Poppins', system-ui, sans-serif;
+      color: var(--text-primary);
+      overflow-x: hidden;
       display: flex;
       align-items: center;
       justify-content: center;
-      background: linear-gradient(135deg, #1a0a0f 0%, #3d1020 50%, #1a0a0f 100%);
-      font-family: 'Segoe UI', system-ui, sans-serif;
-      padding: 2rem;
+      padding: 2.5rem 1.5rem;
     }
 
-    .card {
-      background: rgba(255, 255, 255, 0.05);
-      backdrop-filter: blur(12px);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 24px;
-      padding: 3rem 2.5rem;
-      width: 100%;
-      max-width: 480px;
-      text-align: center;
-      box-shadow: 0 24px 64px rgba(0, 0, 0, 0.5);
+    /* ── Animated Background ───────────────────────────── */
+    .bg-canvas {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      overflow: hidden;
     }
 
-    .wine-icon {
-      font-size: 3rem;
-      margin-bottom: 1rem;
+    .bg-gradient {
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 80% 60% at 15% 15%, rgba(109,7,26,0.45) 0%, transparent 55%),
+        radial-gradient(ellipse 60% 70% at 85% 85%, rgba(139,0,0,0.35) 0%, transparent 55%),
+        linear-gradient(180deg, #0d0108 0%, #150308 50%, #0d0108 100%);
     }
 
-    .card h1 {
-      color: #f0c9d4;
-      font-size: 1.1rem;
-      font-weight: 400;
-      letter-spacing: 0.15em;
-      text-transform: uppercase;
-      margin-bottom: 2rem;
-      opacity: 0.8;
+    .bg-grid {
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.018) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.018) 1px, transparent 1px);
+      background-size: 64px 64px;
     }
 
-    /* Circular score gauge */
-    .gauge-wrap {
+    .blob {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(70px);
+      animation: blobFloat 9s ease-in-out infinite;
+    }
+
+    .blob-1 {
+      width: 560px; height: 560px;
+      background: radial-gradient(circle, rgba(109,7,26,0.5) 0%, transparent 70%);
+      top: -180px; left: -120px;
+      opacity: 0.45; animation-delay: 0s;
+    }
+
+    .blob-2 {
+      width: 450px; height: 450px;
+      background: radial-gradient(circle, rgba(139,0,0,0.4) 0%, transparent 70%);
+      bottom: -120px; right: -100px;
+      opacity: 0.4; animation-delay: -4.5s;
+    }
+
+    @keyframes blobFloat {
+      0%, 100% { transform: translate(0, 0); }
+      50%       { transform: translate(22px, -30px); }
+    }
+
+    /* ── Result Card ───────────────────────────────────── */
+    .result-card {
       position: relative;
-      width: 180px;
-      height: 180px;
+      z-index: 1;
+      width: 100%;
+      max-width: 520px;
+      background: rgba(255,255,255,0.038);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-card);
+      overflow: hidden;
+      animation: cardReveal 0.75s var(--ease) both;
+    }
+
+    /* Top gradient accent bar */
+    .result-card::before {
+      content: '';
+      display: block;
+      height: 2px;
+      background: linear-gradient(90deg,
+        transparent 0%,
+        var(--wine-primary) 25%,
+        var(--gold) 50%,
+        var(--wine-primary) 75%,
+        transparent 100%
+      );
+    }
+
+    @keyframes cardReveal {
+      from { opacity: 0; transform: translateY(28px) scale(0.97); }
+      to   { opacity: 1; transform: translateY(0)   scale(1); }
+    }
+
+    /* ── Card Inner ────────────────────────────────────── */
+    .card-inner {
+      padding: 2.5rem 2.5rem 2.25rem;
+      text-align: center;
+    }
+
+    /* ── Brand Header ──────────────────────────────────── */
+    .brand-header {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-bottom: 1.75rem;
+    }
+
+    .wine-emblem {
+      font-size: 2.8rem;
+      margin-bottom: 0.45rem;
+      animation: floatEmoji 4.5s ease-in-out infinite;
+    }
+
+    @keyframes floatEmoji {
+      0%, 100% { transform: translateY(0); }
+      50%       { transform: translateY(-7px); }
+    }
+
+    .brand-title {
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    /* ── Gauge ─────────────────────────────────────────── */
+    .gauge-container {
+      position: relative;
+      width: 220px; height: 220px;
       margin: 0 auto 1.5rem;
     }
 
     .gauge-svg {
+      width: 220px; height: 220px;
       transform: rotate(-90deg);
-      width: 180px;
-      height: 180px;
+      overflow: visible;
     }
 
-    .gauge-bg {
+    /* Background track */
+    .gauge-track {
       fill: none;
-      stroke: rgba(255,255,255,0.08);
-      stroke-width: 12;
+      stroke: rgba(255,255,255,0.06);
+      stroke-width: 14;
     }
 
-    .gauge-fill {
+    /* Secondary dim ring */
+    .gauge-dim-ring {
       fill: none;
-      stroke-width: 12;
+      stroke: rgba(255,255,255,0.025);
+      stroke-width: 30;
+    }
+
+    /* Animated fill arc */
+    .gauge-arc {
+      fill: none;
+      stroke-width: 14;
       stroke-linecap: round;
-      transition: stroke-dashoffset 1.2s cubic-bezier(.4,0,.2,1);
+      stroke-dasharray: 565;
+      stroke-dashoffset: 565;
+      transition:
+        stroke-dashoffset 1.65s cubic-bezier(0.4,0,0.2,1),
+        stroke            0.4s ease;
     }
 
+    /* Glow outer ring (matches tier color via JS) */
+    .gauge-glow-ring {
+      fill: none;
+      stroke-width: 1;
+      stroke-opacity: 0.18;
+      r: 104;
+    }
+
+    /* Center display */
     .gauge-center {
       position: absolute;
-      top: 50%;
-      left: 50%;
+      top: 50%; left: 50%;
       transform: translate(-50%, -50%);
       text-align: center;
+      pointer-events: none;
     }
 
-    .score-value {
-      font-size: 3rem;
-      font-weight: 700;
+    .gauge-score {
+      font-size: 3.4rem;
+      font-weight: 800;
       color: #fff;
       line-height: 1;
+      letter-spacing: -0.04em;
+      font-variant-numeric: tabular-nums;
     }
 
-    .score-label {
-      font-size: 0.75rem;
-      color: rgba(255,255,255,0.5);
-      letter-spacing: 0.1em;
+    .gauge-denom {
+      font-size: 0.68rem;
+      color: var(--text-muted);
+      letter-spacing: 0.12em;
       text-transform: uppercase;
+      margin-top: 0.12rem;
     }
 
-    /* Quality badge */
+    /* ── AI Label ──────────────────────────────────────── */
+    .ai-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.62rem;
+      color: var(--gold);
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      opacity: 0.7;
+      margin-bottom: 1rem;
+      animation: fadeIn 0.5s 0.5s both;
+    }
+
+    /* ── Quality Badge ─────────────────────────────────── */
     .quality-badge {
       display: inline-flex;
       align-items: center;
       gap: 0.5rem;
-      padding: 0.45rem 1.25rem;
+      padding: 0.5rem 1.6rem;
       border-radius: 999px;
-      font-size: 0.9rem;
-      font-weight: 600;
+      font-size: 0.88rem;
+      font-weight: 700;
       letter-spacing: 0.05em;
-      margin-bottom: 1.75rem;
+      margin-bottom: 1.4rem;
+      border: 1px solid transparent;
+      animation: badgePop 0.5s 0.65s var(--ease) both;
     }
 
-    /* Stars */
-    .stars {
-      font-size: 1.4rem;
-      letter-spacing: 0.1rem;
-      margin-bottom: 1.75rem;
+    @keyframes badgePop {
+      from { opacity: 0; transform: scale(0.75); }
+      to   { opacity: 1; transform: scale(1); }
     }
 
-    /* Description */
-    .quality-desc {
-      font-size: 0.875rem;
-      color: rgba(255,255,255,0.55);
-      line-height: 1.6;
-      margin-bottom: 2rem;
-      padding: 0 0.5rem;
-    }
-
-    /* Score bar breakdown */
-    .scale-bar {
+    /* ── Stars ─────────────────────────────────────────── */
+    .stars-row {
       display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      margin-bottom: 2rem;
+      justify-content: center;
+      gap: 0.22rem;
+      margin-bottom: 1.25rem;
+      font-size: 1.45rem;
     }
 
-    .scale-label {
-      font-size: 0.7rem;
-      color: rgba(255,255,255,0.4);
-      width: 2.5rem;
-      text-align: center;
-      flex-shrink: 0;
+    .star.filled {
+      animation: starPop 0.4s calc(0.9s + var(--i) * 0.1s) var(--ease) both;
     }
 
-    .scale-track {
-      flex: 1;
+    @keyframes starPop {
+      0%   { transform: scale(0) rotate(-20deg); opacity: 0; }
+      60%  { transform: scale(1.3) rotate(5deg); }
+      100% { transform: scale(1) rotate(0deg);   opacity: 1; }
+    }
+
+    /* ── Description ───────────────────────────────────── */
+    .quality-desc {
+      font-size: 0.84rem;
+      color: var(--text-secondary);
+      line-height: 1.72;
+      margin-bottom: 1.75rem;
+      padding: 0 0.25rem;
+      animation: fadeInUp 0.5s 1.1s both;
+    }
+
+    /* ── Progress Bar ──────────────────────────────────── */
+    .progress-section {
+      margin-bottom: 1.6rem;
+      animation: fadeInUp 0.5s 1.28s both;
+    }
+
+    .progress-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      margin-bottom: 0.5rem;
+      letter-spacing: 0.05em;
+    }
+
+    .progress-track {
       height: 6px;
-      background: rgba(255,255,255,0.08);
+      background: rgba(255,255,255,0.065);
       border-radius: 999px;
       overflow: hidden;
     }
 
-    .scale-fill {
+    .progress-fill {
       height: 100%;
       border-radius: 999px;
-      transition: width 1.4s cubic-bezier(.4,0,.2,1);
+      width: 0%;
+      transition: width 1.9s cubic-bezier(0.4,0,0.2,1);
     }
 
-    /* Buttons */
+    /* ── Stats Row ─────────────────────────────────────── */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.7rem;
+      margin-bottom: 2rem;
+      animation: fadeInUp 0.5s 1.45s both;
+    }
+
+    .stat-card {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: var(--radius-sm);
+      padding: 0.95rem 0.5rem;
+      text-align: center;
+      backdrop-filter: blur(8px);
+      transition: all 0.25s var(--ease);
+    }
+
+    .stat-card:hover {
+      background: rgba(255,255,255,0.07);
+      border-color: rgba(255,255,255,0.14);
+    }
+
+    .stat-value {
+      font-size: 1.2rem;
+      font-weight: 700;
+      line-height: 1;
+      margin-bottom: 0.3rem;
+    }
+
+    .stat-label {
+      font-size: 0.6rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    /* ── Action Buttons ────────────────────────────────── */
     .btn-group {
-      display: flex;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
       gap: 0.75rem;
-      flex-wrap: wrap;
-      justify-content: center;
+      animation: fadeInUp 0.5s 1.65s both;
     }
 
     .btn {
-      flex: 1;
-      min-width: 130px;
-      padding: 0.75rem 1.25rem;
-      border-radius: 12px;
-      font-size: 0.9rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.4rem;
+      padding: 0.9rem 1rem;
+      border-radius: var(--radius-sm);
+      font-size: 0.88rem;
       font-weight: 600;
+      font-family: 'Poppins', inherit;
       cursor: pointer;
       text-decoration: none;
       border: none;
-      transition: transform 0.15s, box-shadow 0.15s, opacity 0.15s;
+      transition: all 0.3s var(--ease);
+      letter-spacing: 0.02em;
+      position: relative;
+      overflow: hidden;
     }
 
-    .btn:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.3); }
-    .btn:active { transform: translateY(0); }
+    /* Shine on hover */
+    .btn::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(120deg, transparent 30%, rgba(255,255,255,0.1) 50%, transparent 70%);
+      transform: translateX(-100%);
+      transition: transform 0.45s ease;
+    }
+
+    .btn:hover::before { transform: translateX(100%); }
 
     .btn-primary {
-      background: linear-gradient(135deg, #c0392b, #922b21);
+      background: linear-gradient(135deg, var(--wine-primary) 0%, #9b1428 100%);
       color: #fff;
+      box-shadow: 0 4px 20px rgba(109,7,26,0.45);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 12px 32px rgba(109,7,26,0.62);
     }
 
     .btn-secondary {
-      background: rgba(255,255,255,0.08);
-      color: rgba(255,255,255,0.8);
-      border: 1px solid rgba(255,255,255,0.15);
+      background: rgba(255,255,255,0.05);
+      color: rgba(255,255,255,0.75);
+      border: 1px solid rgba(255,255,255,0.12);
+      backdrop-filter: blur(10px);
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255,255,255,0.1);
+      border-color: rgba(255,255,255,0.22);
+      transform: translateY(-3px);
+      color: #fff;
+    }
+
+    .btn:active { transform: translateY(-1px) !important; }
+
+    /* ── Shared Animations ─────────────────────────────── */
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to   { opacity: 0.7; }
+    }
+
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(14px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── Responsive ────────────────────────────────────── */
+    @media (max-width: 520px) {
+      .card-inner { padding: 2rem 1.5rem 1.75rem; }
+      .gauge-container, .gauge-svg { width: 180px; height: 180px; }
+      .gauge-score { font-size: 2.8rem; }
+      .stats-row { grid-template-columns: 1fr 1fr; }
+      .stats-row .stat-card:last-child { grid-column: span 2; }
+    }
+
+    @media (max-width: 360px) {
+      .btn-group { grid-template-columns: 1fr; }
     }
   </style>
 </head>
 <body>
 
-<div class="card">
-  <div class="wine-icon">🍷</div>
-  <h1>Wine Quality Prediction</h1>
+  <!-- ── Animated Background ── -->
+  <div class="bg-canvas">
+    <div class="bg-gradient"></div>
+    <div class="bg-grid"></div>
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+  </div>
 
-  <div class="gauge-wrap">
-    <svg class="gauge-svg" viewBox="0 0 180 180">
-      <circle class="gauge-bg" cx="90" cy="90" r="74" />
-      <circle class="gauge-fill" id="gaugeFill" cx="90" cy="90" r="74"
-        stroke-dasharray="465"
-        stroke-dashoffset="465" />
-    </svg>
-    <div class="gauge-center">
-      <div class="score-value" id="scoreDisplay">—</div>
-      <div class="score-label">out of 10</div>
+  <!-- ── Result Card ── -->
+  <div class="result-card">
+    <div class="card-inner">
+
+      <!-- Brand Header -->
+      <div class="brand-header">
+        <div class="wine-emblem">🍷</div>
+        <div class="brand-title">Wine Quality Prediction</div>
+      </div>
+
+      <!-- Circular Gauge -->
+      <div class="gauge-container">
+        <svg class="gauge-svg" viewBox="0 0 220 220" overflow="visible">
+          <!-- Dim outer ring -->
+          <circle class="gauge-dim-ring" cx="110" cy="110" r="90" />
+          <!-- Track -->
+          <circle class="gauge-track"    cx="110" cy="110" r="90" />
+          <!-- Fill arc (animated by JS) -->
+          <circle class="gauge-arc" id="gaugeArc" cx="110" cy="110" r="90"
+            stroke-dasharray="565" stroke-dashoffset="565" />
+          <!-- Glow ring (colored by JS) -->
+          <circle class="gauge-glow-ring" id="gaugeGlow" cx="110" cy="110" r="104" />
+        </svg>
+        <div class="gauge-center">
+          <div class="gauge-score" id="scoreDisplay">—</div>
+          <div class="gauge-denom">out of 10</div>
+        </div>
+      </div>
+
+      <!-- AI Label -->
+      <div class="ai-label">✦ AI Prediction</div>
+
+      <!-- Quality Badge -->
+      <div class="quality-badge" id="qualityBadge"></div>
+
+      <!-- Stars -->
+      <div class="stars-row" id="starsRow"></div>
+
+      <!-- Quality Description -->
+      <p class="quality-desc" id="qualityDesc"></p>
+
+      <!-- Progress Bar -->
+      <div class="progress-section">
+        <div class="progress-labels">
+          <span>Quality Score</span>
+          <span id="progressPct" style="font-weight:600;">0%</span>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill" id="progressFill"></div>
+        </div>
+      </div>
+
+      <!-- Stats Row -->
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-value" id="statScore">—</div>
+          <div class="stat-label">Score</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="statGrade">—</div>
+          <div class="stat-label">Grade</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="statPct">—</div>
+          <div class="stat-label">Percentile</div>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="btn-group">
+        <a href="/predict" class="btn btn-primary">🔮 Predict Again</a>
+        <a href="/"        class="btn btn-secondary">🏠 Go Home</a>
+      </div>
+
     </div>
   </div>
 
-  <div class="quality-badge" id="qualityBadge">—</div>
-  <div class="stars" id="starDisplay"></div>
-  <p class="quality-desc" id="qualityDesc"></p>
+  <script>
+    /* ── Parse prediction from Flask ── */
+    const raw   = "{{ prediction }}";
+    const num   = parseFloat(raw.replace(/[\[\]]/g, ""));
+    const score = isNaN(num) ? 0 : Math.max(0, Math.min(10, num));
+    const rounded = Math.round(score * 10) / 10;
 
-  <div class="scale-bar">
-    <span class="scale-label">0</span>
-    <div class="scale-track">
-      <div class="scale-fill" id="scaleFill" style="width:0%"></div>
-    </div>
-    <span class="scale-label">10</span>
-  </div>
+    /* ── Quality tier definitions ── */
+    const TIERS = [
+      {
+        max: 4, grade: "D",
+        color: "#e74c3c", gradStart: "#c0392b", gradEnd: "#e74c3c",
+        label: "Poor", emoji: "😕", stars: 1,
+        desc: "This wine scores below expectations. It may have noticeable defects in balance, aroma, or structure."
+      },
+      {
+        max: 5, grade: "C",
+        color: "#e67e22", gradStart: "#d35400", gradEnd: "#e67e22",
+        label: "Below Average", emoji: "😐", stars: 2,
+        desc: "Drinkable but unremarkable. Lacks complexity and depth, with minor off-notes in the finish."
+      },
+      {
+        max: 6, grade: "B",
+        color: "#f1c40f", gradStart: "#f39c12", gradEnd: "#f1c40f",
+        label: "Average", emoji: "🙂", stars: 3,
+        desc: "A decent, everyday wine with adequate balance and a clean finish. Pleasant for casual occasions."
+      },
+      {
+        max: 7, grade: "A",
+        color: "#27ae60", gradStart: "#1e8449", gradEnd: "#2ecc71",
+        label: "Good", emoji: "😊", stars: 4,
+        desc: "Well-balanced with pleasant aromas and a smooth finish. A solid, reliable choice for most occasions."
+      },
+      {
+        max: 11, grade: "S",
+        color: "#9b59b6", gradStart: "#7d3c98", gradEnd: "#af7ac5",
+        label: "Excellent", emoji: "🤩", stars: 5,
+        desc: "Exceptional quality — outstanding structure, complexity, and a long lingering finish."
+      },
+    ];
 
-  <div class="btn-group">
-    <a href="/predict" class="btn btn-primary">Predict Again</a>
-    <a href="/"       class="btn btn-secondary">Home</a>
-  </div>
-</div>
+    const tier = TIERS.find(t => score < t.max) ?? TIERS[TIERS.length - 1];
+    const pct  = score / 10;
+    const circ = 2 * Math.PI * 90; /* ≈ 565.49 for r=90 */
 
-<script>
-  // prediction comes from Flask as a string, e.g. "[5.234]" or "5.234"
-  const raw = "{{ prediction }}";
-  const num = parseFloat(raw.replace(/[\[\]]/g, ""));
-  const score = isNaN(num) ? 0 : Math.max(0, Math.min(10, num));
-  const rounded = Math.round(score * 10) / 10;
+    /* ── Apply tier color to gauge arc ── */
+    const arc  = document.getElementById('gaugeArc');
+    const glow = document.getElementById('gaugeGlow');
+    arc.style.stroke = tier.color;
+    arc.style.filter = `drop-shadow(0 0 10px ${tier.color}) drop-shadow(0 0 24px ${tier.color}55)`;
+    glow.style.stroke = tier.color;
 
-  document.getElementById("scoreDisplay").textContent = rounded.toFixed(1);
+    /* ── Animate arc and score counter ── */
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        arc.style.strokeDashoffset = circ * (1 - pct);
+      });
+    });
 
-  // Gauge animation (circumference ~465 for r=74)
-  const pct = score / 10;
-  const circ = 2 * Math.PI * 74;
-  const offset = circ * (1 - pct);
-  const fill = document.getElementById("gaugeFill");
+    let startTime = null;
+    const DURATION = 1500;
 
-  // Quality tiers
-  const tiers = [
-    { max: 4,  color: "#e74c3c", label: "Poor",      emoji: "😕", stars: 1,
-      desc: "This wine scores below expectations. It may have noticeable defects in balance or aroma." },
-    { max: 5,  color: "#e67e22", label: "Below Average", emoji: "😐", stars: 2,
-      desc: "Drinkable but unremarkable. Lacks complexity and may have minor off-notes." },
-    { max: 6,  color: "#f1c40f", label: "Average",   emoji: "🙂", stars: 3,
-      desc: "A decent, everyday wine with adequate balance. Pleasant for casual occasions." },
-    { max: 7,  color: "#2ecc71", label: "Good",      emoji: "😊", stars: 4,
-      desc: "Well-balanced with a pleasant finish. A solid choice for most occasions." },
-    { max: 10, color: "#8e44ad", label: "Excellent", emoji: "🤩", stars: 5,
-      desc: "Exceptional quality — outstanding structure, complexity, and a lingering finish." },
-  ];
+    function animateCounter(ts) {
+      if (!startTime) startTime = ts;
+      const t = Math.min((ts - startTime) / DURATION, 1);
+      const eased = 1 - Math.pow(1 - t, 3);
+      document.getElementById('scoreDisplay').textContent = (eased * rounded).toFixed(1);
+      if (t < 1) requestAnimationFrame(animateCounter);
+    }
 
-  const tier = tiers.find(t => score < t.max) || tiers[tiers.length - 1];
+    requestAnimationFrame(animateCounter);
 
-  fill.style.stroke = tier.color;
-  fill.style.strokeDashoffset = offset;
+    /* ── Quality badge ── */
+    const badge = document.getElementById('qualityBadge');
+    badge.textContent  = `${tier.emoji}  ${tier.label}`;
+    badge.style.background   = `${tier.color}1e`;
+    badge.style.color        = tier.color;
+    badge.style.borderColor  = `${tier.color}55`;
+    badge.style.boxShadow    = `0 0 20px ${tier.color}30`;
 
-  const badge = document.getElementById("qualityBadge");
-  badge.textContent = tier.emoji + "  " + tier.label;
-  badge.style.background = tier.color + "22";
-  badge.style.color = tier.color;
-  badge.style.border = "1px solid " + tier.color + "55";
+    /* ── Stars ── */
+    const starsRow = document.getElementById('starsRow');
+    for (let i = 0; i < 5; i++) {
+      const s = document.createElement('span');
+      s.className = i < tier.stars ? 'star filled' : 'star';
+      s.textContent = i < tier.stars ? '★' : '☆';
+      s.style.color = i < tier.stars ? tier.color : 'rgba(255,255,255,0.18)';
+      s.style.setProperty('--i', i);
+      starsRow.appendChild(s);
+    }
 
-  document.getElementById("starDisplay").textContent =
-    "★".repeat(tier.stars) + "☆".repeat(5 - tier.stars);
-  document.getElementById("starDisplay").style.color = tier.color;
+    /* ── Description ── */
+    document.getElementById('qualityDesc').textContent = tier.desc;
 
-  document.getElementById("qualityDesc").textContent = tier.desc;
+    /* ── Progress bar ── */
+    const fill = document.getElementById('progressFill');
+    fill.style.background  = `linear-gradient(90deg, ${tier.gradStart}, ${tier.gradEnd})`;
+    fill.style.boxShadow   = `0 0 12px ${tier.color}80`;
+    const pctLabel = document.getElementById('progressPct');
+    pctLabel.textContent = `${Math.round(pct * 100)}%`;
+    pctLabel.style.color = tier.color;
+    setTimeout(() => { fill.style.width = `${pct * 100}%`; }, 150);
 
-  const scaleFill = document.getElementById("scaleFill");
-  scaleFill.style.background = tier.color;
-  scaleFill.style.width = (pct * 100) + "%";
-</script>
+    /* ── Stats row ── */
+    const statScore = document.getElementById('statScore');
+    const statGrade = document.getElementById('statGrade');
+    const statPct   = document.getElementById('statPct');
+    statScore.textContent = rounded.toFixed(1);
+    statGrade.textContent = tier.grade;
+    statPct.textContent   = `${Math.round(pct * 100)}%`;
+    [statScore, statGrade, statPct].forEach(el => { el.style.color = tier.color; });
+  </script>
 
 </body>
 </html>
