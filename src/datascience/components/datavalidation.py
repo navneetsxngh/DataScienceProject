@@ -1,5 +1,4 @@
 from src.datascience import logger
-import os
 import pandas as pd
 from src.datascience.entity.config_entity import DataValidationConfig
 

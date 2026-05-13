@@ -37,7 +37,7 @@ class ModelEvaluation:
             (r2, mae, mse, rmse) = self.eval_metrics(test_y, predicted)
 
             ## Saving metrics as local
-            scores = {"r2" : r2, "MAE" : mae, "MSE" : mse, "RMSE" : rmse}
+            scores = {"r2": r2, "MAE": mae, "MSE": mse, "RMSE": rmse}
             save_json(Path(self.config.metric_file_name), scores)
 
             mlflow.log_params(self.config.all_params)
