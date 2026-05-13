@@ -1,1 +1,280 @@
-<h1>{{prediction}} </h1>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Wine Quality Result</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #1a0a0f 0%, #3d1020 50%, #1a0a0f 100%);
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      padding: 2rem;
+    }
+
+    .card {
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 24px;
+      padding: 3rem 2.5rem;
+      width: 100%;
+      max-width: 480px;
+      text-align: center;
+      box-shadow: 0 24px 64px rgba(0, 0, 0, 0.5);
+    }
+
+    .wine-icon {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+    }
+
+    .card h1 {
+      color: #f0c9d4;
+      font-size: 1.1rem;
+      font-weight: 400;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      margin-bottom: 2rem;
+      opacity: 0.8;
+    }
+
+    /* Circular score gauge */
+    .gauge-wrap {
+      position: relative;
+      width: 180px;
+      height: 180px;
+      margin: 0 auto 1.5rem;
+    }
+
+    .gauge-svg {
+      transform: rotate(-90deg);
+      width: 180px;
+      height: 180px;
+    }
+
+    .gauge-bg {
+      fill: none;
+      stroke: rgba(255,255,255,0.08);
+      stroke-width: 12;
+    }
+
+    .gauge-fill {
+      fill: none;
+      stroke-width: 12;
+      stroke-linecap: round;
+      transition: stroke-dashoffset 1.2s cubic-bezier(.4,0,.2,1);
+    }
+
+    .gauge-center {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+    }
+
+    .score-value {
+      font-size: 3rem;
+      font-weight: 700;
+      color: #fff;
+      line-height: 1;
+    }
+
+    .score-label {
+      font-size: 0.75rem;
+      color: rgba(255,255,255,0.5);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    /* Quality badge */
+    .quality-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.45rem 1.25rem;
+      border-radius: 999px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      margin-bottom: 1.75rem;
+    }
+
+    /* Stars */
+    .stars {
+      font-size: 1.4rem;
+      letter-spacing: 0.1rem;
+      margin-bottom: 1.75rem;
+    }
+
+    /* Description */
+    .quality-desc {
+      font-size: 0.875rem;
+      color: rgba(255,255,255,0.55);
+      line-height: 1.6;
+      margin-bottom: 2rem;
+      padding: 0 0.5rem;
+    }
+
+    /* Score bar breakdown */
+    .scale-bar {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .scale-label {
+      font-size: 0.7rem;
+      color: rgba(255,255,255,0.4);
+      width: 2.5rem;
+      text-align: center;
+      flex-shrink: 0;
+    }
+
+    .scale-track {
+      flex: 1;
+      height: 6px;
+      background: rgba(255,255,255,0.08);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .scale-fill {
+      height: 100%;
+      border-radius: 999px;
+      transition: width 1.4s cubic-bezier(.4,0,.2,1);
+    }
+
+    /* Buttons */
+    .btn-group {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .btn {
+      flex: 1;
+      min-width: 130px;
+      padding: 0.75rem 1.25rem;
+      border-radius: 12px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      border: none;
+      transition: transform 0.15s, box-shadow 0.15s, opacity 0.15s;
+    }
+
+    .btn:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.3); }
+    .btn:active { transform: translateY(0); }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #c0392b, #922b21);
+      color: #fff;
+    }
+
+    .btn-secondary {
+      background: rgba(255,255,255,0.08);
+      color: rgba(255,255,255,0.8);
+      border: 1px solid rgba(255,255,255,0.15);
+    }
+  </style>
+</head>
+<body>
+
+<div class="card">
+  <div class="wine-icon">🍷</div>
+  <h1>Wine Quality Prediction</h1>
+
+  <div class="gauge-wrap">
+    <svg class="gauge-svg" viewBox="0 0 180 180">
+      <circle class="gauge-bg" cx="90" cy="90" r="74" />
+      <circle class="gauge-fill" id="gaugeFill" cx="90" cy="90" r="74"
+        stroke-dasharray="465"
+        stroke-dashoffset="465" />
+    </svg>
+    <div class="gauge-center">
+      <div class="score-value" id="scoreDisplay">—</div>
+      <div class="score-label">out of 10</div>
+    </div>
+  </div>
+
+  <div class="quality-badge" id="qualityBadge">—</div>
+  <div class="stars" id="starDisplay"></div>
+  <p class="quality-desc" id="qualityDesc"></p>
+
+  <div class="scale-bar">
+    <span class="scale-label">0</span>
+    <div class="scale-track">
+      <div class="scale-fill" id="scaleFill" style="width:0%"></div>
+    </div>
+    <span class="scale-label">10</span>
+  </div>
+
+  <div class="btn-group">
+    <a href="/predict" class="btn btn-primary">Predict Again</a>
+    <a href="/"       class="btn btn-secondary">Home</a>
+  </div>
+</div>
+
+<script>
+  // prediction comes from Flask as a string, e.g. "[5.234]" or "5.234"
+  const raw = "{{ prediction }}";
+  const num = parseFloat(raw.replace(/[\[\]]/g, ""));
+  const score = isNaN(num) ? 0 : Math.max(0, Math.min(10, num));
+  const rounded = Math.round(score * 10) / 10;
+
+  document.getElementById("scoreDisplay").textContent = rounded.toFixed(1);
+
+  // Gauge animation (circumference ~465 for r=74)
+  const pct = score / 10;
+  const circ = 2 * Math.PI * 74;
+  const offset = circ * (1 - pct);
+  const fill = document.getElementById("gaugeFill");
+
+  // Quality tiers
+  const tiers = [
+    { max: 4,  color: "#e74c3c", label: "Poor",      emoji: "😕", stars: 1,
+      desc: "This wine scores below expectations. It may have noticeable defects in balance or aroma." },
+    { max: 5,  color: "#e67e22", label: "Below Average", emoji: "😐", stars: 2,
+      desc: "Drinkable but unremarkable. Lacks complexity and may have minor off-notes." },
+    { max: 6,  color: "#f1c40f", label: "Average",   emoji: "🙂", stars: 3,
+      desc: "A decent, everyday wine with adequate balance. Pleasant for casual occasions." },
+    { max: 7,  color: "#2ecc71", label: "Good",      emoji: "😊", stars: 4,
+      desc: "Well-balanced with a pleasant finish. A solid choice for most occasions." },
+    { max: 10, color: "#8e44ad", label: "Excellent", emoji: "🤩", stars: 5,
+      desc: "Exceptional quality — outstanding structure, complexity, and a lingering finish." },
+  ];
+
+  const tier = tiers.find(t => score < t.max) || tiers[tiers.length - 1];
+
+  fill.style.stroke = tier.color;
+  fill.style.strokeDashoffset = offset;
+
+  const badge = document.getElementById("qualityBadge");
+  badge.textContent = tier.emoji + "  " + tier.label;
+  badge.style.background = tier.color + "22";
+  badge.style.color = tier.color;
+  badge.style.border = "1px solid " + tier.color + "55";
+
+  document.getElementById("starDisplay").textContent =
+    "★".repeat(tier.stars) + "☆".repeat(5 - tier.stars);
+  document.getElementById("starDisplay").style.color = tier.color;
+
+  document.getElementById("qualityDesc").textContent = tier.desc;
+
+  const scaleFill = document.getElementById("scaleFill");
+  scaleFill.style.background = tier.color;
+  scaleFill.style.width = (pct * 100) + "%";
+</script>
+
+</body>
+</html>
